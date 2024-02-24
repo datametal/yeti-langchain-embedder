@@ -1,0 +1,13 @@
+.czrc
+.versionrc
+.eslintrc
+.commitlintrc.json
+
+.lintstaged.json
+.ncurc.json
+.npmrc
+.prettierignore
+.prettierrc
+.prettierrc.json
+docker-compose.yml
+.trunk

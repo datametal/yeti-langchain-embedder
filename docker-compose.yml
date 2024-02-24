@@ -1,0 +1,31 @@
+version: '3.8'
+
+services:
+  redis:
+    container_name: redisstack
+    image: redis/redis-stack-server:latest
+    ports:
+      - '6379:6379'
+      - '8001:8001'
+    restart: always
+    volumes:
+      - redisdc:/data
+# networks:
+#   redisdc:
+#     driver: bridge
+
+volumes:
+  redisdc:
+    driver: local
+
+  #  nodeapp:
+  #   container_name: nodeapp
+  #   image: node:20
+  #   environment:
+  #     HTTPS_METHOD: noredirect
+  #   ports:
+  #     - 8081:3000
+  #   volumes:
+  #     - ./:/usr/src/app/
+  #   working_dir: /usr/src/app
+  #   command: npm run start:dev
