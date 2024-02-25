@@ -1,71 +1,45 @@
-import { Injectable, OnModuleInit } from '@nestjs/common'
-import { createClient, RedisClientType, SchemaFieldTypes, VectorAlgorithms } from 'redis'
-import { BIGFOOT_INDEX, BIGFOOT_PREFIX, REDIS_HOST, REDIS_PORT } from './config'
+import { Injectable, OnModuleInit, Logger } from '@nestjs/common'
+import { createClient, RedisClientType } from 'redis'
+import { REDIS_HOST, REDIS_PORT } from '../constants'
 
 @Injectable()
 export class RedisService implements OnModuleInit {
-  private redis: RedisClientType
+  private readonly logger = new Logger(RedisService.name)
+  private redisClient: RedisClientType
 
-  async onModuleInit() {
-    this.redis = createClient({ socket: { host: REDIS_HOST, port: REDIS_PORT } })
-    this.redis.on('error', err => console.log('Redis Client Error', err))
-    await this.redis.connect()
+  async onModuleInit(): Promise<void> {
+    this.redisClient = createClient({
+      socket: {
+        host: REDIS_HOST,
+        port: REDIS_PORT,
+      },
+    })
 
-    // Wait for Redis to finish loading
+    this.redisClient.on('error', err => this.logger.error('Redis Client Error', err))
+
+    await this.redisClient.connect()
     await this.waitForRedis()
-
-    // Create index if needed
-    if (!(await this.indexExists())) await this.createIndex()
   }
 
-  async waitForRedis() {
+  private async waitForRedis(): Promise<void> {
     let loaded = false
 
     while (!loaded) {
       loaded = await this.isReady()
-      if (!loaded) console.log('Redis is loading...')
+      if (!loaded) {
+        this.logger.log('Redis is loading...')
+      }
     }
 
-    console.log('Redis is ready!')
+    this.logger.log('Redis is ready!')
   }
 
-  async isReady(): Promise<boolean> {
-    const info = await this.redis.info('persistence')
+  private async isReady(): Promise<boolean> {
+    const info = await this.redisClient.info('persistence')
     const lines = info.split('\r\n')
     const loadingLine = lines.find(line => line.startsWith('loading:'))
+    if (!loadingLine) return false
     const loadingValue = loadingLine.split(':')[1]
     return loadingValue === '0'
-  }
-
-  async indexExists(): Promise<boolean> {
-    const indices = await this.redis.ft._list()
-    return indices.includes(BIGFOOT_INDEX)
-  }
-
-  async createIndex() {
-    await this.redis.ft.create(
-      'bigfoot:sighting:index',
-      {
-        id: SchemaFieldTypes.TAG,
-        title: SchemaFieldTypes.TEXT,
-        observed: SchemaFieldTypes.TEXT,
-        classification: SchemaFieldTypes.TAG,
-        county: SchemaFieldTypes.TAG,
-        state: SchemaFieldTypes.TAG,
-        latlng: SchemaFieldTypes.GEO,
-        highTemp: SchemaFieldTypes.NUMERIC,
-        embedding: {
-          type: SchemaFieldTypes.VECTOR,
-          ALGORITHM: VectorAlgorithms.FLAT,
-          TYPE: 'FLOAT32',
-          DIM: 384,
-          DISTANCE_METRIC: 'COSINE',
-        },
-      },
-      {
-        ON: 'HASH',
-        PREFIX: `${BIGFOOT_PREFIX}:`,
-      },
-    )
   }
 }
