@@ -1,21 +1,24 @@
-import { Controller, Get } from '@nestjs/common'
-import { SummarizationService } from './summarization.service'
-import { EmbeddingService } from './embedding.service'
+export * from './embedding.service'
+export * from './summarization.service'
 
-@Controller()
-export class ModelController {
-  constructor(
-    private readonly summarizationService: SummarizationService,
-    private readonly embeddingService: EmbeddingService,
-  ) {}
+// import { Controller, Get } from '@nestjs/common'
+// import { SummarizationService } from './summarization.service'
+// import { EmbeddingService } from './embedding.service'
 
-  @Get('summarize')
-  getSummarizationModel() {
-    return this.summarizationService.fetchModel()
-  }
+// @Controller()
+// export class ModelController {
+//   constructor(
+//     private readonly summarizationService: SummarizationService,
+//     private readonly embeddingService: EmbeddingService,
+//   ) {}
 
-  @Get('embed')
-  getEmbeddingModel() {
-    return this.embeddingService.fetchModel()
-  }
-}
+//   @Get('summarize')
+//   getSummarizationModel() {
+//     return this.summarizationService.fetchModel()
+//   }
+
+//   @Get('embed')
+//   getEmbeddingModel() {
+//     return this.embeddingService.fetchModel()
+//   }
+// }
